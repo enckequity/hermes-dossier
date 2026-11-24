@@ -51,5 +51,5 @@ config_schema:
     description: "Companies House API key (United Kingdom). Optional."
   user_agent:
     type: str
-    default: "Dossier/0.1 (+https://github.com/Frazzlesprite/hermes-dossier)"
+    default: "Dossier/0.2 (research brief; respects robots.txt)"
     description: "User-Agent sent with every outbound request."

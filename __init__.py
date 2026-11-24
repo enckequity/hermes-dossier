@@ -63,7 +63,7 @@ def recall_dossier(session_id: str = "", user_message: str = "", **kwargs: Any) 
             try:
                 row = conn.execute(
                     "SELECT taken_at FROM snapshots WHERE entity_id = ? ORDER BY taken_at DESC LIMIT 1",
-                    (entity_id)).fetchone()
+                    (entity_id,)).fetchone()
             finally:
                 conn.close()
             if not row:

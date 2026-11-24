@@ -249,7 +249,12 @@ async def forget(entity_id: int, body: Optional[dict] = None) -> dict[str, Any]:
 
     # The rendered briefs go too, otherwise "forget" leaves the document behind.
     removed = 0
-    slug = "".join(ch if ch.isalnum() else "-" for ch in entity["canonical_name"].lower()).strip("-") or "entity"
+    # Same slug as tools._slug, and only <slug>-<YYYYMMDDTHHMMSSZ> files, so forgetting
+    # "Acme" leaves "Acme Corp" (acme-corp-...) alone.
+    import re  # noqa: PLC0415
+
+    slug = re.sub(r"[^a-z0-9]+", "-", (entity["canonical_name"] or "").lower()).strip("-")[:60] or "entity"
+    stamp = re.compile(re.escape(slug) + r"-\d{8}T\d{6}Z")
     try:
         briefs = _brief_dir()
     except Exception:
@@ -257,6 +262,8 @@ async def forget(entity_id: int, body: Optional[dict] = None) -> dict[str, Any]:
     if briefs is not None and briefs.is_dir():
         for pattern in (f"{slug}-*.html", f"{slug}-*.pdf"):
             for path in briefs.glob(pattern):
+                if not stamp.fullmatch(path.stem):
+                    continue
                 try:
                     path.unlink()
                     removed += 1

@@ -87,6 +87,7 @@ def test_the_purpose_is_printed_on_the_brief():
     # The purpose lives in the brief header, printed once; this section is for
     # Hermes memory only, so it must not repeat it.
     assert "Purpose:" not in (why.note or "")
+    assert why.note == "Nothing in this workspace's memory connects this entity to current work."
     assert brief.purpose == "interview for the platform role"
     assert brief.context == "interview"
 

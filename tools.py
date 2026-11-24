@@ -103,8 +103,13 @@ def _purge_briefs(name: str) -> int:
     """
     removed = 0
     try:
+        # Brief files are <slug>-<YYYYMMDDTHHMMSSZ>.<ext>. Match the stamp exactly, so
+        # forgetting "Acme" leaves "Acme Corp" (acme-corp-...) alone.
+        stamp = re.compile(re.escape(_slug(name)) + r"-\d{8}T\d{6}Z")
         for pattern in (f"{_slug(name)}-*.html", f"{_slug(name)}-*.pdf"):
             for path in _brief_dir().glob(pattern):
+                if not stamp.fullmatch(path.stem):
+                    continue
                 try:
                     path.unlink()
                     removed += 1

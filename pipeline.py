@@ -35,10 +35,17 @@ DEFAULTS = {
     "freshness_days": 90,
     "retention_days": 90,
     "allow_people": True,
-    "user_agent": "Dossier/0.1 (+https://github.com/Frazzlesprite/hermes-dossier)",
+    "user_agent": "Dossier/0.2 (research brief; respects robots.txt)",
     "country": "",
     "registry_contact": "",
 }
+
+
+def _flag(value: Any) -> bool:
+    """A boolean setting that may arrive as text ("false", "0", "no", "off")."""
+    if isinstance(value, str):
+        return value.strip().lower() not in ("", "0", "false", "no", "off")
+    return bool(value)
 
 
 @dataclass
@@ -58,7 +65,7 @@ class Config:
             sources_per_brief=max(1, min(int(values["sources_per_brief"]), 40)),
             freshness_days=max(1, int(values["freshness_days"])),
             retention_days=max(1, int(values["retention_days"])),
-            allow_people=bool(values["allow_people"]),
+            allow_people=_flag(values["allow_people"]),
             user_agent=str(values["user_agent"]),
             country=str(values.get("country") or ""),
             registry_contact=str(values.get("registry_contact") or ""))

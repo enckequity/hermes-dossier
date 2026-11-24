@@ -269,13 +269,13 @@ def compose(
     )
 
     # The purpose is printed once, in the brief's header. This section is for
-    # what Hermes remembers about the entity, which is a different thing.
+    # what the assistant remembers about the entity, which is a different thing.
     purpose_note = memory_context or ""
     sections.append(
         Section(
             id="why",
             title="Why they matter to you",
-            note=purpose_note or "Nothing in your Hermes memory connects this entity to current work.",
+            note=purpose_note or "Nothing in this workspace's memory connects this entity to current work.",
         )
     )
 

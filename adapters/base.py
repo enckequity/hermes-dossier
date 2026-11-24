@@ -27,7 +27,7 @@ from dataclasses import dataclass, field
 from html.parser import HTMLParser
 from typing import Optional
 
-DEFAULT_UA = "Dossier/0.1 (+https://github.com/Frazzlesprite/hermes-dossier)"
+DEFAULT_UA = "Dossier/0.2 (research brief; respects robots.txt)"
 MAX_BYTES = 2_000_000
 MIN_HOST_INTERVAL = 1.0
 _TIMEOUT = 15.0

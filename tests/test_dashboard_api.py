@@ -93,6 +93,19 @@ def test_forget_requires_confirmation(api):
     assert "Acme Robotics" not in names
 
 
+def test_forget_leaves_briefs_of_similarly_named_entities(api, tmp_path, monkeypatch):
+    briefs = tmp_path / "briefs"
+    briefs.mkdir()
+    mine = briefs / "acme-robotics-20260101T000000Z.html"
+    other = briefs / "acme-robotics-labs-20260101T000000Z.html"
+    mine.write_text("<p>brief</p>")
+    other.write_text("<p>another entity</p>")
+    monkeypatch.setattr(api, "_brief_dir", lambda: briefs)
+    payload = asyncio.run(api.forget(1, body={"confirm": True}))
+    assert payload["deleted"]["briefs"] == 1
+    assert not mine.exists() and other.exists()
+
+
 def test_refresh_without_the_plugin_loaded_says_where_to_run_it(api, monkeypatch):
     # In this test process the plugin package *is* imported by conftest, so the
     # backend would find it. Pretend it is somewhere else, which is the real
