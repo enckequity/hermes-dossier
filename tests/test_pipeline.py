@@ -265,3 +265,55 @@ def test_forget_refuses_without_confirmation(tmp_path, monkeypatch):
         assert conn.execute("SELECT COUNT(*) FROM entities").fetchone()[0] == 1
     finally:
         conn.close()
+
+
+def test_forget_leaves_briefs_of_similarly_named_entities(tmp_path, monkeypatch):
+    _run(tmp_path, monkeypatch, 1)
+    import dossier.db as dbmod
+    import dossier.tools as toolsmod
+
+    real_connect = dbmod.connect
+    monkeypatch.setattr(dbmod, "connect", lambda path=None: real_connect(tmp_path / "dossier.db"))
+    briefs = tmp_path / "briefs"
+    briefs.mkdir()
+    mine = briefs / "acme-robotics-20260101T000000Z.html"
+    other = briefs / "acme-robotics-labs-20260101T000000Z.pdf"
+    mine.write_text("<p>brief</p>")
+    other.write_bytes(b"%PDF other entity")
+    monkeypatch.setattr(toolsmod, "_brief_dir", lambda: briefs)
+
+    payload = json.loads(tools.forget({"name": "Acme Robotics", "confirm": True}))
+    assert payload["deleted"]["briefs"] == 1
+    assert not mine.exists()
+    assert other.exists(), "forgetting Acme Robotics deleted the Acme Robotics Labs brief"
+
+
+def test_recall_hook_points_at_a_held_dossier(tmp_path, monkeypatch):
+    _run(tmp_path, monkeypatch, 1)
+    import dossier
+    import dossier.db as dbmod
+
+    real_connect = dbmod.connect
+    monkeypatch.setattr(dbmod, "connect", lambda path=None: real_connect(tmp_path / "dossier.db"))
+    monkeypatch.setattr(dossier, "_entity_cache", (0.0, []))
+    out = dossier.recall_dossier(user_message="Prep me for the Acme Robotics call")
+    assert out is not None, "the recall hook never fired"
+    assert "Acme Robotics" in out["context"] and "snapshot" in out["context"]
+    assert dossier.recall_dossier(user_message="nothing relevant here") is None
+
+
+def test_allow_people_false_holds_when_set_as_text():
+    for value in (False, "false", "False", "0", "no", "off"):
+        assert Config.from_mapping({"allow_people": value}).allow_people is False, value
+    assert Config.from_mapping({"allow_people": "true"}).allow_people is True
+    result = pipeline.build(
+        "Sarah Chen", kind="person", purpose="interview", conn=None,
+        config=Config.from_mapping({"allow_people": "false"}))
+    assert result["status"] == "refused"
+
+
+def test_default_user_agent_names_no_host_project():
+    from dossier.adapters.base import DEFAULT_UA
+
+    for ua in (DEFAULT_UA, Config().user_agent, pipeline.DEFAULTS["user_agent"]):
+        assert "hermes" not in ua.lower() and "github" not in ua.lower(), ua
